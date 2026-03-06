@@ -1,0 +1,14 @@
+# Core data manipulation
+pandas>=2.0.0
+
+# LangChain base package – provides AgentExecutor, memory, prompt templates
+langchain>=0.2.0
+
+# LangChain community integrations – includes ChatOllama
+langchain-community>=0.2.0
+
+# LangChain experimental – provides create_pandas_dataframe_agent
+langchain-experimental>=0.0.60
+
+# HTTP library used internally by langchain-community for Ollama requests
+requests>=2.31.0
