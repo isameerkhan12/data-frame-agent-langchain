@@ -20,10 +20,10 @@ import logging
 from typing import Any
 
 import pandas as pd
-from langchain.memory import ConversationBufferMemory
+from langchain_classic.memory import ConversationBufferMemory
+from langchain_classic.agents import AgentType
 from langchain_community.chat_models import ChatOllama
 from langchain_experimental.agents import create_pandas_dataframe_agent
-from langchain.agents.agent_types import AgentType
 
 from src.config import (
     AGENT_ALLOW_DANGEROUS_CODE,
@@ -108,12 +108,13 @@ def build_agent(df: pd.DataFrame) -> Any:
         llm=llm,
         df=df,
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-        verbose=AGENT_VERBOSE,
+        verbose=AGENT_VERBOSE, # shows the full reasoning trace in the console, similar to our original print() calls.
         max_iterations=AGENT_MAX_ITERATIONS,
         allow_dangerous_code=AGENT_ALLOW_DANGEROUS_CODE,
         # Pass the memory so multi-turn conversations work.
         # The agent will prepend chat history to each prompt automatically.
         agent_executor_kwargs={"memory": memory, "handle_parsing_errors": True},
+        
     )
 
     logger.info("Agent ready.")
