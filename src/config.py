@@ -41,7 +41,7 @@ AGENT_MAX_ITERATIONS: int = int(os.getenv("AGENT_MAX_ITERATIONS", "10"))
 # When True the agent prints each intermediate reasoning step to stdout.
 # LangChain exposes this via verbose=True on the AgentExecutor; the original
 # implementation achieved similar output with manual print() calls.
-AGENT_VERBOSE: bool = os.getenv("AGENT_VERBOSE", "false").lower() == "true"
+AGENT_VERBOSE: bool = os.getenv("AGENT_VERBOSE", "true").lower() == "true"
 
 # Allow potentially dangerous pandas operations (e.g. eval/exec).
 # LangChain's create_pandas_dataframe_agent requires this flag when the
