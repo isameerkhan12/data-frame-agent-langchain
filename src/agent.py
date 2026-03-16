@@ -38,6 +38,40 @@ from src.config import (
 logger = logging.getLogger(__name__)
 
 
+REACT_PREFIX = """You are a pandas dataframe analysis agent.
+You MUST follow this exact loop format and nothing else:
+
+Thought: <short reasoning>
+Action: python_repl_ast
+Action Input: <single valid Python expression using df>
+Observation: <tool result>
+
+Repeat Thought/Action/Action Input/Observation as needed.
+
+When finished, output ONLY:
+Final Answer: <concise answer with reasoning from observations>
+
+Rules:
+- Only allowed tool name is exactly python_repl_ast
+- Never add apologies or extra text before Action
+- Never wrap Action Input in markdown fences
+- Keep Action Input executable Python only
+- If a previous parse failed, continue with the exact format above
+"""
+
+REACT_SUFFIX = """Begin.
+
+Question: {input}
+{agent_scratchpad}
+"""
+
+PARSING_ERROR_HINT = (
+    "Your previous message did not follow the required format. "
+    "Return ONLY Thought, Action, Action Input, Observation, or Final Answer. "
+    "Tool name must be exactly python_repl_ast."
+)
+
+
 def build_llm() -> ChatOllama:
     """Instantiate the ChatOllama language model.
 
@@ -111,9 +145,16 @@ def build_agent(df: pd.DataFrame) -> Any:
         verbose=AGENT_VERBOSE, # shows the full reasoning trace in the console, similar to our original print() calls.
         max_iterations=AGENT_MAX_ITERATIONS,
         allow_dangerous_code=AGENT_ALLOW_DANGEROUS_CODE,
+        prefix=REACT_PREFIX,
+        suffix=REACT_SUFFIX,
+        include_df_in_prompt=None,
         # Pass the memory so multi-turn conversations work.
         # The agent will prepend chat history to each prompt automatically.
-        agent_executor_kwargs={"memory": memory, "handle_parsing_errors": True},
+        agent_executor_kwargs={
+            "memory": memory,
+            "handle_parsing_errors": PARSING_ERROR_HINT,
+        },
+        # prefix=
         
     )
 

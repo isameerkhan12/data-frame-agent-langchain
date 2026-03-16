@@ -53,7 +53,9 @@ def run_single_question(question: str) -> int:
     try:
         df = load_weather_data()
         agent = build_agent(df)
+        logger.info("User question: %s", question)
         answer = ask(agent, question)
+        logger.info("Agent answer: %s", answer)
         _print_answer(answer)
         return 0
     except FileNotFoundError as exc:
@@ -96,7 +98,9 @@ def run_interactive(agent: Any) -> None:
             break
 
         try:
+            logger.info("User question: %s", question)
             answer = ask(agent, question)
+            logger.info("Agent answer: %s", answer)
             _print_answer(answer)
         except RuntimeError as exc:
             print(f"Error: {exc}", file=sys.stderr)
