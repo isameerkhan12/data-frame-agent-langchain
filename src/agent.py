@@ -155,7 +155,7 @@ def build_agent(df: pd.DataFrame) -> Any:
         agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
         verbose=AGENT_VERBOSE, # shows the full reasoning trace in the console, similar to our original print() calls.
         max_iterations=AGENT_MAX_ITERATIONS,
-        allow_dangerous_code=AGENT_ALLOW_DANGEROUS_CODE,
+        allow_dangerous_code=AGENT_ALLOW_DANGEROUS_CODE, #True → LangChain allows eval/exec (needed for pandas analysis)
         prefix=REACT_PREFIX,
         suffix=REACT_SUFFIX,
         include_df_in_prompt=None,
@@ -163,8 +163,8 @@ def build_agent(df: pd.DataFrame) -> Any:
         # The agent will prepend chat history to each prompt automatically.
         agent_executor_kwargs={
             "memory": memory,
-            "handle_parsing_errors": PARSING_ERROR_HINT,
-            "callbacks": callbacks,
+            "handle_parsing_errors": PARSING_ERROR_HINT, # ← EXPLICIT error handling (looping back if LLM format mistakes occur)
+            "callbacks": callbacks, # ← Tool errors logged here
         },
         # prefix=
         
