@@ -29,11 +29,14 @@ from src.config import (
     AGENT_ALLOW_DANGEROUS_CODE,
     AGENT_MAX_ITERATIONS,
     AGENT_VERBOSE,
+    CALLBACK_TRACE_ENABLED,
+    CALLBACK_TRACE_MAX_CHARS,
     OLLAMA_BASE_URL,
     OLLAMA_MAX_TOKENS,
     OLLAMA_MODEL,
     OLLAMA_TEMPERATURE,
 )
+from src.callbacks import AgentTraceCallbackHandler
 
 logger = logging.getLogger(__name__)
 
@@ -133,6 +136,14 @@ def build_agent(df: pd.DataFrame) -> Any:
         AGENT_VERBOSE,
     )
 
+    callbacks = []
+    if CALLBACK_TRACE_ENABLED:
+        callbacks.append(AgentTraceCallbackHandler(max_chars=CALLBACK_TRACE_MAX_CHARS))
+        logger.info(
+            "Callback tracing enabled (max_chars=%d).",
+            CALLBACK_TRACE_MAX_CHARS,
+        )
+
     # ZERO_SHOT_REACT_DESCRIPTION is chosen because:
     #   - It works with any LLM (including local Ollama models) via ReAct prompting.
     #   - It does not require function-calling support (unlike OPENAI_FUNCTIONS).
@@ -153,6 +164,7 @@ def build_agent(df: pd.DataFrame) -> Any:
         agent_executor_kwargs={
             "memory": memory,
             "handle_parsing_errors": PARSING_ERROR_HINT,
+            "callbacks": callbacks,
         },
         # prefix=
         

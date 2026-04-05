@@ -65,3 +65,11 @@ DATA_CSV_PATH: str = os.getenv("DATA_CSV_PATH", "data-set/weather-data.csv")
 
 # Python logging level for the application logger.
 LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+# Enable LangChain callback tracing logs for chain/tool/LLM lifecycle events.
+CALLBACK_TRACE_ENABLED: bool = (
+    os.getenv("CALLBACK_TRACE_ENABLED", "true").lower() == "true"
+)
+
+# Maximum characters logged for callback payload previews.
+CALLBACK_TRACE_MAX_CHARS: int = int(os.getenv("CALLBACK_TRACE_MAX_CHARS", "600"))

@@ -129,6 +129,8 @@ environment variables:
 | `AGENT_ALLOW_DANGEROUS_CODE` | `true` | Allow Python eval in the REPL tool |
 | `DATA_CSV_PATH` | `data-set/weather-data.csv` | Path to the CSV file |
 | `LOG_LEVEL` | `INFO` | Python logging level |
+| `CALLBACK_TRACE_ENABLED` | `true` | Enable callback logs for chain/tool/LLM lifecycle events |
+| `CALLBACK_TRACE_MAX_CHARS` | `600` | Max characters logged per callback payload preview |
 
 Example:
 
