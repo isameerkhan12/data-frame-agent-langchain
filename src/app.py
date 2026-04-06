@@ -20,8 +20,9 @@ import logging
 import sys
 from typing import Any
 
-from src.agent import ask, build_agent
+from src.agent import ask, build_agent, ask_reflexion
 from src.data_loader import load_weather_data
+from src.config import REFLEXION_ENABLED
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +41,72 @@ def _print_answer(answer: str) -> None:
     print(f"\n🤖  {answer}\n")
 
 
+def run_single_question_reflexion(question: str) -> int:
+    """
+    Answer a single question using Reflexion mode (with learning & reflection).
+    
+    This mode is better for complex questions requiring multiple attempts
+    and persistent learning across queries.
+    
+    DIFFERENCES from run_single_question (ReAct mode):
+    ────────────────────────────────────────────────────
+    ReAct (original):
+      - Single attempt, simple error recovery within query
+      - Error feedback included in scratchpad
+      - No persistent memory across queries
+      - Faster (fewer tokens), less token usage
+      - Good for simple Q&A
+    
+    Reflexion (this function):
+      - Multiple attempts with explicit reflection node
+      - Errors trigger "why did this happen?" analysis
+      - Lessons stored in memory, applied to future queries
+      - Slower but more accurate for complex problems
+      - Good for multi-step reasoning and tricky data
+    
+    Configuration:
+        REFLEXION_ENABLED: Set to true to use this mode
+        REFLEXION_MAX_ATTEMPTS: Retry attempts (default: 5)
+        REFLEXION_MAX_LESSONS: Memory size (default: 50)
+    
+    Args:
+        question: The natural-language question to ask
+    
+    Returns:
+        Exit code: 0 on success, 1 on error
+    """
+    logger.info("Running in Reflexion mode (LangGraph with learning).")
+    try:
+        from src.reflexion_graph import create_reflexion_graph
+        
+        df = load_weather_data()
+        agent, memory = create_reflexion_graph(df)
+        
+        logger.info("Reflexion agent created. User question: %s", question)
+        answer = ask_reflexion(agent, memory, question, df)
+        logger.info("Reflexion answer: %s", answer)
+        
+        # Show memory summary if verbose
+        if logger.isEnabledFor(logging.DEBUG):
+            memory_summary = memory.get_all_lessons_summary()
+            logger.debug("Memory state:\n%s", memory_summary)
+        
+        _print_answer(answer)
+        return 0
+    except FileNotFoundError as exc:
+        logger.error("Data file not found: %s", exc)
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+    except RuntimeError as exc:
+        logger.error("Reflexion error: %s", exc)
+        print(f"Reflexion error: {exc}", file=sys.stderr)
+        return 1
+    except Exception as exc:
+        logger.exception("Unexpected error: %s", exc)
+        print(f"Unexpected error: {exc}", file=sys.stderr)
+        return 1
+
+
 def run_single_question(question: str) -> int:
     """Answer a single question and exit.
 
@@ -49,7 +116,13 @@ def run_single_question(question: str) -> int:
     Returns:
         An exit code: 0 on success, 1 on error.
     """
-    logger.info("Running in single-question mode.")
+    # Route to Reflexion if enabled
+    if REFLEXION_ENABLED:
+        logger.info("Reflexion mode is enabled. Using Reflexion agent.")
+        return run_single_question_reflexion(question)
+    
+    # Default: ReAct mode
+    logger.info("Running in single-question mode (ReAct).")
     try:
         df = load_weather_data()
         agent = build_agent(df)

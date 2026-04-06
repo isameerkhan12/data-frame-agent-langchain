@@ -35,6 +35,9 @@ from src.config import (
     OLLAMA_MAX_TOKENS,
     OLLAMA_MODEL,
     OLLAMA_TEMPERATURE,
+    REFLEXION_ENABLED,
+    REFLEXION_MAX_ATTEMPTS,
+    REFLEXION_MAX_LESSONS,
 )
 from src.callbacks import AgentTraceCallbackHandler
 
@@ -152,7 +155,7 @@ def build_agent(df: pd.DataFrame) -> Any:
     agent = create_pandas_dataframe_agent(
         llm=llm,
         df=df,
-        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION, 
         verbose=AGENT_VERBOSE, # shows the full reasoning trace in the console, similar to our original print() calls.
         max_iterations=AGENT_MAX_ITERATIONS,
         allow_dangerous_code=AGENT_ALLOW_DANGEROUS_CODE, #True → LangChain allows eval/exec (needed for pandas analysis)
@@ -198,3 +201,46 @@ def ask(agent: Any, question: str) -> str:
     except Exception as exc:
         logger.error("Agent encountered an error: %s", exc)
         raise RuntimeError(f"Agent error: {exc}") from exc
+
+
+def ask_reflexion(agent: Any, memory: Any, question: str, df: pd.DataFrame) -> str:
+    """
+    Ask using the Reflexion graph (with learning & persistence).
+    
+    This is the new mode for complex questions where the agent should
+    learn from failures and retry with reflection. It explicitly implements
+    the Reflexion pattern with reflection nodes and persistent memory.
+    
+    Configuration:
+        REFLEXION_ENABLED: Must be True to use this mode
+        REFLEXION_MAX_ATTEMPTS: Number of retry attempts (default: 5)
+        REFLEXION_MAX_LESSONS: Max stored lessons (default: 50)
+    
+    How it works:
+        1. EXECUTE: Run the agent attempt
+        2. EVALUATE: Check if success or error
+        3. If error → REFLECT: Analyze and store lesson
+        4. ROUTER: Retry if learnable error, else give up
+        5. Lessons persist to next query
+    
+    Args:
+        agent: The compiled LangGraph reflexion agent
+        memory: The shared ReflexionMemory instance for cross-query learning
+        question: User question
+        df: The pandas DataFrame to analyze
+    
+    Returns:
+        The final answer after potentially multiple attempts
+    
+    Raises:
+        RuntimeError: If the agent encounters a fatal error
+    """
+    logger.debug("Using Reflexion mode for question: %s", question)
+    try:
+        from src.reflexion_graph import ask_with_reflexion
+        result = ask_with_reflexion(agent, memory, question, df)
+        logger.debug("Reflexion answer: %s", result)
+        return result
+    except Exception as exc:
+        logger.error("Reflexion agent error: %s", exc)
+        raise RuntimeError(f"Reflexion agent error: {exc}") from exc

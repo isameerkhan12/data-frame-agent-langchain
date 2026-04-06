@@ -1,13 +1,16 @@
 """
-Entry point for the LangChain DataFrame Agent.
+Entry point for the LangChain DataFrame Agent with Reflexion support.
 
 Usage
 -----
-Interactive mode (default):
+Interactive mode (default, ReAct):
     python main.py
 
-Single-question mode:
+Single-question mode (ReAct):
     python main.py --question "Which city had the highest temperature?"
+
+Single-question mode (Reflexion with learning):
+    REFLEXION_ENABLED=true python main.py --question "Complex question..."
 
 Options:
     --question TEXT   Ask a single question and exit.
@@ -22,9 +25,31 @@ Environment variables (all optional):
     OLLAMA_MAX_TOKENS        Max output tokens (default: 2048)
     AGENT_MAX_ITERATIONS     AgentExecutor iteration cap (default: 10)
     AGENT_VERBOSE            Print chain-of-thought steps (default: false)
-    AGENT_ALLOW_DANGEROUS_CODE  Allow Python eval in agent (default: true)
+    REFLEXION_ENABLED        Use Reflexion LangGraph mode (default: false)
+    REFLEXION_MAX_ATTEMPTS   Max reflexion retry attempts (default: 5)
+    REFLEXION_MAX_LESSONS    Max lessons in memory (default: 50)
     DATA_CSV_PATH            Path to weather CSV (default: data-set/weather-data.csv)
     LOG_LEVEL                Logging level    (default: INFO)
+
+REFLEXION MODE DETAILS:
+──────────────────────
+Reflexion is a more advanced agent framework (vs ReAct) that:
+- Explicitly reflects on failures (dedicated Reflect node)
+- Stores lessons in persistent memory
+- Applies lessons to future queries
+- Retries failed attempts with learned context
+
+Use Reflexion for:
+  ✓ Complex multi-step reasoning
+  ✓ Questions requiring high accuracy
+  ✓ Learning from past mistakes
+  ✓ Similar questions asked repeatedly
+
+Use ReAct (default) for:
+  ✓ Simple Q&A that usually works
+  ✓ Fast responses needed
+  ✓ Lower token budget
+  ✓ Fresh start each query
 """
 
 import argparse

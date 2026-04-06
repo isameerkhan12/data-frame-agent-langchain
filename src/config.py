@@ -73,3 +73,45 @@ CALLBACK_TRACE_ENABLED: bool = (
 
 # Maximum characters logged for callback payload previews.
 CALLBACK_TRACE_MAX_CHARS: int = int(os.getenv("CALLBACK_TRACE_MAX_CHARS", "600"))
+
+
+# ---------------------------------------------------------------------------
+# Reflexion settings (LangGraph-based learning agent)
+# ---------------------------------------------------------------------------
+
+# Enable Reflexion mode (with explicit reflection & memory learning).
+# 
+# ReAct mode (default):
+#   - Uses simple error recovery within single query
+#   - Error → Observation → Continue same attempt
+#   
+# Reflexion mode (when REFLEXION_ENABLED=true):
+#   - Explicit reflection step after errors
+#   - Error → Reflect → Lesson stored → Future queries learn from it
+#   - Multiple retry attempts with persistent memory
+#
+# Set to "true" for multi-attempt queries with learning, "false" for simpler ReAct
+REFLEXION_ENABLED: bool = os.getenv("REFLEXION_ENABLED", "false").lower() == "true"
+
+# Maximum retry attempts in reflexion mode before giving up.
+# Each failed attempt triggers reflection and a new attempt with lessons.
+# This is separate from AGENT_MAX_ITERATIONS (ReAct mode).
+#
+# Typical values:
+#   - 2: Conservative, fast responses
+#   - 5: Balanced (default)
+#   - 10: Aggressive, more learning but slower
+REFLEXION_MAX_ATTEMPTS: int = int(os.getenv("REFLEXION_MAX_ATTEMPTS", "5"))
+
+# Maximum number of lessons to store in reflexion memory.
+# When exceeded, oldest lessons are discarded (FIFO).
+# Prevents unbounded memory growth in long-running sessions.
+#
+# Each lesson stores:
+#   - Problem category (e.g., "column_not_found")
+#   - Error message and type
+#   - Solution/reflection
+#   - Timestamp
+#
+# Typical values: 20-100. Default 50 lessons ≈ 50KB memory
+REFLEXION_MAX_LESSONS: int = int(os.getenv("REFLEXION_MAX_LESSONS", "50"))

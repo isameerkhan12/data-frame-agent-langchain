@@ -18,3 +18,11 @@ requests>=2.31.0
 
 # Required by pandas.to_markdown(), used by create_pandas_dataframe_agent
 tabulate>=0.9.0
+
+# LangGraph – Graph-based agent framework for complex workflows and reflexion
+# Enables the Reflexion pattern with explicit nodes and state machine
+langgraph>=0.0.30
+
+# Python typing extensions for advanced type hints (TypedDict, Annotated)
+# Required by LangGraph for state type definitions
+typing-extensions>=4.8.0
